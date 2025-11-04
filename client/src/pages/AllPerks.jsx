@@ -23,14 +23,28 @@ export default function AllPerks() {
 
   // ==================== SIDE EFFECTS WITH useEffect HOOK ====================
 
- /*
- TODO: HOOKS TO IMPLEMENT
- * useEffect Hook #1: Initial Data Loading
- * useEffect Hook #2: Auto-search on Input Change
+  // useEffect #1: Load perks when component mounts
+  useEffect(() => {
+    loadAllPerks()
+  }, []) // Empty dependency array means this only runs once on mount
 
-*/
-
+  // useEffect #2: Auto-search when search query or merchant filter changes
+  useEffect(() => {
+    // Skip debounce if explicitly clearing both filters
+    if (!searchQuery && !merchantFilter && (searchQuery === '' || merchantFilter === '')) {
+      return; // Let handleReset handle the immediate search
+    }
+    
+    // Create a timeout to debounce the search
+    const timeoutId = setTimeout(() => {
+      loadAllPerks()
+    }, 300) // Wait 300ms after last keystroke before searching
+    
+    // Cleanup function to cancel pending search if user types again
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, merchantFilter]) // Re-run when search inputs change
   
+  // useEffect #3: Extract unique merchants from perks
   useEffect(() => {
     // Extract all merchant names from perks array
     const merchants = perks
@@ -96,10 +110,10 @@ export default function AllPerks() {
   
   function handleReset() {
     // Reset search and filter states to empty
-    // The useEffect with [searchQuery, merchantFilter] dependencies
-    // will automatically trigger and reload all perks
     setSearchQuery('')
     setMerchantFilter('')
+    // Immediately load all perks without waiting for debounce
+    loadAllPerks()
   }
 
   
@@ -136,7 +150,8 @@ export default function AllPerks() {
                 type="text"
                 className="input"
                 placeholder="Enter perk name..."
-                
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <p className="text-xs text-zinc-500 mt-1">
                 Auto-searches as you type, or press Enter / click Search
@@ -151,7 +166,8 @@ export default function AllPerks() {
               </label>
               <select
                 className="input"
-                
+                value={merchantFilter}
+                onChange={(e) => setMerchantFilter(e.target.value)}
               >
                 <option value="">All Merchants</option>
                 
